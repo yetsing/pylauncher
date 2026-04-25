@@ -34,6 +34,5 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
-          name: "Build Launcher v1.0.0"
           working_directory: setuptools\setuptools
           files: "*.exe"
