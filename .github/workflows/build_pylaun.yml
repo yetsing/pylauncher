@@ -42,16 +42,24 @@ jobs:
           # 4. 执行构建
           # -trimpath 去除本地路径信息，增加安全性
           # -ldflags "-s -w" 去除调试符号，减小体积
-          go build -trimpath -ldflags "-s -w $LDFLAGS" -o .\bin\pylaun.exe .
+          go build -trimpath -ldflags "-s -w $LDFLAGS" -o .\dist\pylaun.exe .
 
           # --- PowerShell 语法结束 ---
           
           # 验证版本信息（可选）
           Write-Host "Finished build"
-          .\bin\pylaun.exe --version
+          .\dist\pylaun.exe --version
+
+      - name: Create Versioned Zip
+        run: |
+          $VERSION = $env:GITHUB_REF_NAME
+          $ZIP_NAME = "pylaun-${VERSION}-windows.zip"
+          Copy-Item README.md dist\
+          Copy-Item LICENSE dist\
+          Compress-Archive -Path dist\* -DestinationPath $ZIP_NAME
 
       - name: Release
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v3
         with:
-          files: "bin/pylaun.exe"
+          files: "pylaun-*-windows.zip"
