@@ -36,7 +36,7 @@ var (
 		"arm64": "gui-arm64.exe",
 	}
 
-	version = "0.1.0"
+	_version = "0.1.0"
 )
 
 func init() {
