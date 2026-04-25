@@ -35,8 +35,10 @@ func isCrossDeviceError(err error) bool {
 		return false
 	}
 	// 尝试转换为 syscall.Errno 进行判断
-	if pathErr, ok := err.(*os.PathError); ok {
-		if errno, ok := pathErr.Err.(syscall.Errno); ok {
+	var pathErr *os.PathError
+	if errors.As(err, &pathErr) {
+		var errno syscall.Errno
+		if errors.As(pathErr.Err, &errno) {
 			// 17 是 Linux 下的 EXDEV，Windows 下通常也有对应的 Errno
 			// 这里主要依靠错误类型判断，或者简单粗暴地判断错误信息
 			return errors.Is(errno, syscall.EXDEV)
@@ -66,47 +68,10 @@ func moveByCopyDelete(src, dst string) error {
 
 // 移动文件：复制内容 -> 删除源文件
 func moveFileCopyDelete(src, dst string) error {
-	// 1. 打开源文件
-	srcFile, err := os.Open(src)
+	err := copyFile(src, dst)
 	if err != nil {
 		return err
 	}
-	defer func(srcFile *os.File) {
-		err := srcFile.Close()
-		if err != nil {
-			errorLog.Println(err)
-		}
-	}(srcFile)
-
-	// 2. 创建目标文件 (如果存在则覆盖，这符合移动语义)
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer func(dstFile *os.File) {
-		err := dstFile.Close()
-		if err != nil {
-			errorLog.Println(err)
-		}
-	}(dstFile)
-
-	// 3. 复制内容
-	if _, err := io.Copy(dstFile, srcFile); err != nil {
-		return err
-	}
-
-	// 4. 同步权限 (可选，保持原文件权限)
-	srcInfo, _ := os.Stat(src)
-	err = os.Chmod(dst, srcInfo.Mode())
-	if err != nil {
-		return err
-	}
-
-	// 5. 关闭文件以确保数据写入磁盘
-	dstFile.Close()
-	srcFile.Close()
-
-	// 6. 删除源文件
 	return os.Remove(src)
 }
 
@@ -152,13 +117,17 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close()
+	defer func(srcFile *os.File) {
+		_ = srcFile.Close()
+	}(srcFile)
 
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer dstFile.Close()
+	defer func(dstFile *os.File) {
+		_ = dstFile.Close()
+	}(dstFile)
 
 	if _, err := io.Copy(dstFile, srcFile); err != nil {
 		return err

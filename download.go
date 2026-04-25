@@ -39,11 +39,11 @@ func DownloadUnzipAndMove(url, targetPath string) error {
 		return fmt.Errorf("failed to create temp dir for decompression: %w", err)
 	}
 	defer func() {
-		os.RemoveAll(tempExtractDir) // 确保清理临时解压目录
+		_ = os.RemoveAll(tempExtractDir) // 确保清理临时解压目录
 	}()
 	infoLog.Println("📦 Decompressing...")
 	if err := unzipFile(tempZipPath, tempExtractDir); err != nil {
-		return fmt.Errorf("解压失败: %w", err)
+		return fmt.Errorf("failed to decompress: %w", err)
 	}
 
 	// 4. 移动文件夹到指定位置
@@ -69,7 +69,9 @@ func downloadFile(url string, dst *os.File) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("HTTP Status: %s", resp.Status)
@@ -86,7 +88,9 @@ func unzipFile(zipPath, dest string) error {
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func(reader *zip.ReadCloser) {
+		_ = reader.Close()
+	}(reader)
 
 	for _, file := range reader.File {
 		// 安全检查：防止路径遍历攻击 (如 ../../../etc/passwd)
@@ -100,7 +104,7 @@ func unzipFile(zipPath, dest string) error {
 		filePath := filepath.Join(dest, file.Name)
 
 		if file.FileInfo().IsDir() {
-			os.MkdirAll(filePath, os.ModePerm)
+			_ = os.MkdirAll(filePath, os.ModePerm)
 			continue
 		}
 
@@ -109,22 +113,32 @@ func unzipFile(zipPath, dest string) error {
 			return err
 		}
 
-		// 打开 zip 内的文件
-		srcFile, err := file.Open()
-		if err != nil {
-			return err
-		}
-		defer srcFile.Close()
+		err = func() error { // 打开 zip 内的文件
+			srcFile, err := file.Open()
+			if err != nil {
+				return err
+			}
+			defer func(srcFile io.ReadCloser) {
+				_ = srcFile.Close()
+			}(srcFile)
 
-		// 创建目标文件
-		dstFile, err := os.Create(filePath)
-		if err != nil {
-			return err
-		}
-		defer dstFile.Close()
+			// 创建目标文件
+			dstFile, err := os.Create(filePath)
+			if err != nil {
+				return err
+			}
+			defer func(dstFile *os.File) {
+				_ = dstFile.Close()
+			}(dstFile)
 
-		// 复制内容
-		if _, err := io.Copy(dstFile, srcFile); err != nil {
+			// 复制内容
+			if _, err := io.Copy(dstFile, srcFile); err != nil {
+				return err
+			}
+			return nil
+		}()
+
+		if err != nil {
 			return err
 		}
 	}

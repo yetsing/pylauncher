@@ -35,6 +35,8 @@ var (
 		"x64":   "gui-64.exe",
 		"arm64": "gui-arm64.exe",
 	}
+
+	version = "0.1.0"
 )
 
 func init() {
@@ -122,7 +124,9 @@ func main() {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
 	err = downloadFile(url, file)
 	if err != nil {
 		errorLog.Printf("⚠️ Failed to download launcher.exe from github: %v", err)
@@ -143,7 +147,7 @@ func main() {
 	if err != nil && !os.IsExist(err) {
 		errorLog.Fatal(err)
 	}
-	file.Close()
+	_ = file.Close()
 
 	infoLog.Println("✅️ Done")
 	infoLog.Printf("🎯 entrypoint %s", entrypointName)
@@ -221,7 +225,9 @@ func makePipWrapper(pythonExecutable string) {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
-	defer os.Remove(makePipPath)
+	defer func(name string) {
+		_ = os.Remove(name)
+	}(makePipPath)
 
 	err = RunCommand(pythonExecutable, makePipPath)
 	if err != nil {
