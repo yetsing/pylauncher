@@ -1,0 +1,55 @@
+name: Build pylaun
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run Linter
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+
+      - name: Build
+        run: |
+          # --- PowerShell 语法开始 ---
+          
+          # 1. 获取 Git 提交哈希 (短版)
+          $GIT_COMMIT = git rev-parse --short HEAD
+          
+          # 2. 获取当前 UTC 时间
+          $BUILD_TIME = Get-Date -AsUtc -Format "yyyy-MM-dd HH:mm:ss"
+          
+          # 3. 拼接 ldflags
+          # 注意：PowerShell 中 -X 参数后的值如果包含空格，需要妥善包裹
+          $LDFLAGS = "-X 'main.GitCommit=$GIT_COMMIT' -X 'main.BuildTime=$BUILD_TIME'"
+          
+          # 4. 执行构建
+          # -trimpath 去除本地路径信息，增加安全性
+          # -ldflags "-s -w" 去除调试符号，减小体积
+          go build -trimpath -ldflags "-s -w $LDFLAGS" -o .\bin\pylaun.exe .
+
+          # --- PowerShell 语法结束 ---
+          
+          # 验证版本信息（可选）
+          Write-Host "Finished build"
+          .\bin\pylaun.exe --version
+
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: "bin\pylaun.exe"
