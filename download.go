@@ -22,8 +22,8 @@ func DownloadUnzipAndMove(url, targetPath string) error {
 
 	// 确保函数退出时关闭文件并删除临时文件（即使出错也要清理）
 	defer func() {
-		tempFile.Close()
-		os.Remove(tempZipPath)
+		_ = tempFile.Close()
+		_ = os.Remove(tempZipPath)
 	}()
 
 	// 2. 下载文件
@@ -38,8 +38,9 @@ func DownloadUnzipAndMove(url, targetPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir for decompression: %w", err)
 	}
-	defer os.RemoveAll(tempExtractDir) // 确保清理临时解压目录
-
+	defer func() {
+		os.RemoveAll(tempExtractDir) // 确保清理临时解压目录
+	}()
 	infoLog.Println("📦 Decompressing...")
 	if err := unzipFile(tempZipPath, tempExtractDir); err != nil {
 		return fmt.Errorf("解压失败: %w", err)
@@ -55,9 +56,7 @@ func DownloadUnzipAndMove(url, targetPath string) error {
 	sourcePath := findRootFolder(tempExtractDir)
 	sourcePath = filepath.Join(sourcePath, "tools")
 
-	if err := os.Rename(sourcePath, targetPath); err != nil {
-		// 如果目标已存在，可以选择先删除
-		// os.RemoveAll(targetPath)
+	if err := MoveFileOrDir(sourcePath, targetPath); err != nil {
 		return fmt.Errorf("failed to move directory: %w", err)
 	}
 
