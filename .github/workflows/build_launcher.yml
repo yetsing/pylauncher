@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-container:
+  build:
     runs-on: windows-latest
     permissions: write-all
     steps:
