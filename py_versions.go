@@ -28,7 +28,7 @@ func getPythonVersion(executable string) (string, error) {
 	var sb strings.Builder
 	found := false
 	for _, c := range v {
-		if !found && !((c >= '0' && c <= '9') || c == '.') {
+		if !found && (c < '0' || c > '9') && c != '.' {
 			sb.WriteRune('-')
 			found = true
 		}
@@ -114,7 +114,9 @@ func fetchURL(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request failed, StatusCode: %d", resp.StatusCode)
