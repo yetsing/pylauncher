@@ -15,6 +15,7 @@ var (
 	debug         bool
 	listPython    bool
 	gui           bool
+	versionFlag   bool
 	platform      string
 	pythonVersion string
 	cwd           string
@@ -36,7 +37,9 @@ var (
 		"arm64": "gui-arm64.exe",
 	}
 
-	_version = "0.1.0"
+	CmdVersion = "0.1.0"
+	GitCommit  string
+	BuildTime  string
 )
 
 func init() {
@@ -44,6 +47,7 @@ func init() {
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.BoolVar(&listPython, "list-python", false, "show available python version")
 	flag.BoolVar(&gui, "gui", false, "use gui launcher.exe")
+	flag.BoolVar(&versionFlag, "version", false, "show version")
 	flag.StringVar(&pythonVersion, "python", "3.12", "python version")
 	flag.StringVar(&platform, "platform", "x64", "platform(values: x86 x64 arm64)")
 
@@ -66,6 +70,11 @@ func init() {
 }
 
 func main() {
+	if versionFlag {
+		fmt.Printf("Version: %s (%s %s)\n", CmdVersion, GitCommit, BuildTime)
+		return
+	}
+
 	platforms := cliPlatforms
 	if gui {
 		platforms = guiPlatforms
