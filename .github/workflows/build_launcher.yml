@@ -1,0 +1,38 @@
+name: Build launcher
+on:
+  workflow_dispatch:
+
+jobs:
+  build-container:
+    runs-on: windows-latest
+    permissions: write-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: main
+
+      - name: Checkout tools repo
+        uses: actions/checkout@v6
+        with:
+          repository: pypa/setuptools
+          ref: "v82.0.1"
+          path: setuptools
+
+      - name: Get latest CMake and Ninja
+        uses: lukka/get-cmake@latest
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: apply patch
+        run: cd setuptools && git apply ../main/setuptools.patch && cd ..
+
+      - name: build
+        run: cd setuptools && python3 .\tool\build_launchers.py && cd ..
+
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          working_directory: setuptools\setuptools
+          files: "*.exe"
