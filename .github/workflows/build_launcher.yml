@@ -29,11 +29,11 @@ jobs:
         run: cd setuptools && git apply ../main/setuptools.patch && cd ..
 
       - name: build
-        run: cd setuptools && python3 .\tool\build_launchers.py && cd ..
+        run: cd setuptools && python3 .\tools\build_launchers.py && cd ..
 
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
-          name: "Build Launcher"
+          name: "Build Launcher v1.0.0"
           working_directory: setuptools\setuptools
           files: "*.exe"
