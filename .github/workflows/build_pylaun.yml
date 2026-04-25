@@ -52,4 +52,4 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
-          files: "bin\pylaun.exe"
+          files: "bin/pylaun.exe"
