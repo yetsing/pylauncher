@@ -14,19 +14,36 @@ var (
 	verbose       bool
 	debug         bool
 	listPython    bool
+	gui           bool
+	platform      string
 	pythonVersion string
 	cwd           string
 
 	infoLog  *log.Logger
 	debugLog *log.Logger
 	errorLog *log.Logger
+
+	cliPlatforms = map[string]string{
+		"x86":   "cli-32.exe",
+		"win32": "cli-32.exe",
+		"x64":   "cli-64.exe",
+		"arm64": "cli-arm64.exe",
+	}
+	guiPlatforms = map[string]string{
+		"x86":   "gui-32.exe",
+		"win32": "gui-32.exe",
+		"x64":   "gui-64.exe",
+		"arm64": "gui-arm64.exe",
+	}
 )
 
 func init() {
-	flag.BoolVar(&verbose, "verbose", false, "详细输出")
-	flag.BoolVar(&debug, "debug", false, "调试输出")
-	flag.BoolVar(&listPython, "list-python", false, "显示可用 python 版本")
+	flag.BoolVar(&verbose, "verbose", false, "verbose mode")
+	flag.BoolVar(&debug, "debug", false, "debug mode")
+	flag.BoolVar(&listPython, "list-python", false, "show available python version")
+	flag.BoolVar(&gui, "gui", false, "use gui launcher.exe")
 	flag.StringVar(&pythonVersion, "python", "3.12", "python version")
+	flag.StringVar(&platform, "platform", "x64", "platform(values: x86 x64 arm64)")
 
 	flag.Parse()
 
@@ -47,6 +64,15 @@ func init() {
 }
 
 func main() {
+	platforms := cliPlatforms
+	if gui {
+		platforms = guiPlatforms
+	}
+	exeName, exists := platforms[platform]
+	if !exists {
+		errorLog.Fatalf("platform expected one of [x86, x64, arm64], but got %q", platform)
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		errorLog.Fatal(err)
@@ -90,7 +116,37 @@ func main() {
 	infoLog.Println("🔨 Make activate script")
 	makeActivateScript()
 
+	infoLog.Println("🔨 Make entrypoint")
+	url := fmt.Sprintf("https://github.com/yetsing/pylauncher/releases/download/LauncherV1.0.0/%s", exeName)
+	file, err := os.OpenFile("launcher.exe", os.O_WRONLY|os.O_CREATE, 0755)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	defer file.Close()
+	err = downloadFile(url, file)
+	if err != nil {
+		errorLog.Printf("⚠️ Failed to download launcher.exe from github: %v", err)
+		infoLog.Println("🔄 Try download launcher.exe from gitee")
+		url = fmt.Sprintf("https://raw.giteeusercontent.com/ayeqing/yq-file-storage/raw/master/LauncherV1.0.0/%s", exeName)
+		err = downloadFile(url, file)
+		if err != nil {
+			errorLog.Fatal(err)
+		}
+	}
+	entrypointName := "main.py"
+	if gui {
+		entrypointName = "main.pyw"
+	}
+	// O_CREATE: 如果文件不存在则创建
+	// O_EXCL: 与 O_CREATE 配合使用，如果文件已存在，则 OpenFile 会返回错误
+	file, err = os.OpenFile(entrypointName, os.O_CREATE|os.O_EXCL|os.O_RDONLY, 0644)
+	if err != nil && !os.IsExist(err) {
+		errorLog.Fatal(err)
+	}
+	file.Close()
+
 	infoLog.Println("✅️ Done")
+	infoLog.Printf("🎯 entrypoint %s", entrypointName)
 }
 
 func installPython(executable string, version string) {
