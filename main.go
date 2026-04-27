@@ -224,13 +224,13 @@ func makePipWrapper(pythonExecutable string) {
 	}
 
 	pipPath := filepath.Join(cwd, "pip_wrapper", "scripts", "pip.py")
-	err = stringToFile(pipCode, pipPath)
+	err = stringToFile(strings.TrimSpace(pipCode), pipPath)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
 
 	makePipPath := filepath.Join(cwd, "pip_wrapper", "makepip.py")
-	err = stringToFile(makePipCode, makePipPath)
+	err = stringToFile(strings.TrimSpace(makePipCode), makePipPath)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -242,17 +242,25 @@ func makePipWrapper(pythonExecutable string) {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
+
+	exists, err = PathExists(pipExecutable)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	if !exists {
+		errorLog.Fatal("Failed to make pip.exe")
+	}
 }
 
 func makeActivateScript() {
 	activateCmdPath := filepath.Join(cwd, "activate.cmd")
-	err := stringToFile(activateCmd, activateCmdPath)
+	err := stringToFile(strings.TrimSpace(activateCmd), activateCmdPath)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
 
 	activatePs1Path := filepath.Join(cwd, "activate.ps1")
-	err = stringToFile(activatePs1, activatePs1Path)
+	err = stringToFile(strings.TrimSpace(activatePs1), activatePs1Path)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
