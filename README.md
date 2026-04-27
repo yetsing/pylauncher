@@ -1,6 +1,6 @@
 # pylauncher
 
-Setup Python Standalone Deploy Environment
+Setup Python Standalone Deploy Environment on Windows
 
 ## Usage
 
