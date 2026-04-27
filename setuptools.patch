@@ -1,8 +1,81 @@
 diff --git a/launcher.c b/launcher.c
-index b87cb32ad..3090d7fc6 100644
+index b87cb32ad..5d17ec9d3 100644
 --- a/launcher.c
 +++ b/launcher.c
-@@ -123,8 +123,8 @@ char *find_exe(char *exename, char *script) {
+@@ -88,6 +88,72 @@ char *quoted(char *data) {
+ 
+ 
+ 
++char* trim_whitespace(char *str) {
++    char *end;
++
++    while (isspace((unsigned char)*str)) str++;
++
++    if (*str == 0)
++        return str;
++
++    end = str + strlen(str) - 1;
++    while (end > str && isspace((unsigned char)*end)) end--;
++
++    end[1] = '\0';
++
++    return str;
++}
++
++
++int read_file_trimmed(const char *file_path, char *buf, size_t buf_len) {
++    if (!file_path || !buf || buf_len == 0) {
++        return -1;
++    }
++
++    FILE *fp = fopen(file_path, "r");
++    if (fp == NULL) {
++        return -1;
++    }
++
++    size_t bytes_read = fread(buf, 1, buf_len - 1, fp);
++    fclose(fp);
++
++    buf[bytes_read] = '\0';
++
++    char *trimmed = trim_whitespace(buf);
++    
++    if (trimmed != buf) {
++        size_t len = strlen(trimmed);
++        memmove(buf, trimmed, len + 1); // +1 鍖呭惈 '\0'
++    }
++
++    return 0;
++}
++
++
++char *get_entrypoint(const char *d) {
++    char cfg[256];
++    char buf[256];
++    char *result, c;
++
++    strcpy(cfg, d);
++    strcat(cfg, "launcher.cfg");
++    // printf("cfg: %s\n", cfg);
++
++    if (read_file_trimmed(cfg, buf, sizeof(buf)) != 0) {
++        return GUI ? "main.pyw" : "main.py";
++    }
++
++    /* convert slashes to backslashes */
++    result = buf;
++    while (c = *result++) if (c=='/') result[-1] = '\\';
++
++    result = calloc(MAX_PATH, sizeof(char));
++    strncpy(result, buf, MAX_PATH);
++    return result;
++}
++
++
+ char *loadable_exe(char *exename) {
+     /* HINSTANCE hPython;  DLL handle for python executable */
+     char *result;
+@@ -123,8 +189,8 @@ char *find_exe(char *exename, char *script) {
      */
      _splitpath(script, drive, dir, fname, ext);
      result = dir + strlen(dir) -1;
@@ -13,7 +86,15 @@ index b87cb32ad..3090d7fc6 100644
      _makepath(path, drive, dir, exename, NULL);
      return loadable_exe(path);
  }
-@@ -271,10 +271,9 @@ int run(int argc, char **argv, int is_gui) {
+@@ -256,6 +322,7 @@ int run(int argc, char **argv, int is_gui) {
+     char **newargs, **newargsp, **parsedargs; /* argument array for exec */
+     char *ptr, *end;    /* working pointers for string manipulation */
+     char *cmdline;
++    char *entrypoint;
+     int i, parsedargc;              /* loop counter */
+ 
+     /* compute script name from our .exe name*/
+@@ -271,10 +338,11 @@ int run(int argc, char **argv, int is_gui) {
      GetFinalPathNameByHandle(hFile, script, 256, VOLUME_NAME_DOS);
      
      end = script + strlen(script);
@@ -22,7 +103,9 @@ index b87cb32ad..3090d7fc6 100644
          *end-- = '\0';
 -    *end-- = '\0';
 -    strcat(script, (GUI ? "-script.pyw" : "-script.py"));
-+    strcat(script, (GUI ? "main.pyw" : "main.py"));
++    entrypoint = get_entrypoint(script);
++    strcat(script, entrypoint);
++    printf("entrypoint: %s\n", script);
  
      /* figure out the target python executable */
  
