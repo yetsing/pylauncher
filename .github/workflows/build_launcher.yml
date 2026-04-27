@@ -1,6 +1,9 @@
 name: Build launcher
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "LauncherV*"
 
 jobs:
   build:
@@ -32,8 +35,8 @@ jobs:
         run: cd setuptools && python3 .\tools\build_launchers.py && cd ..
 
       - name: Release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: LauncherV1.0.0
           working_directory: setuptools\setuptools
           files: "*.exe"
