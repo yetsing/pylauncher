@@ -79,16 +79,19 @@ char *quoted(char *data) {
     return result;
 }
 
+#define APP_VERSION "1.2.1"
+#define LOG_PREFIX "[VERBOSE] "
+#define LOGV(fmt, ...) log_verbose(LOG_PREFIX fmt, ##__VA_ARGS__)
+#define MODFILENAME "main.mod"
+
 static int g_verbose = 0;
 
 void init_verbose() {
     g_verbose = getenv("VERBOSE") != NULL;
 }
 
-// Verbose 输出函数
 void log_verbose(const char* format, ...) {
     if (g_verbose) {
-        printf("[VERBOSE] ");
         va_list args;
         va_start(args, format);
         vprintf(format, args);
@@ -153,10 +156,10 @@ char *get_module(const char *directory) {
     size_t size;
 
     strncpy(modpath, directory, sizeof(modpath));
-    strcat(modpath, "main.mod");
+    strcat(modpath, MODFILENAME);
 
     if (read_file_trimmed(modpath, buf, sizeof(buf))) {
-        log_verbose("Cannot open %s\n", modpath);
+        LOGV("Cannot open %s\n", modpath);
         return NULL;
     }
 
@@ -341,6 +344,10 @@ int run(int argc, char **argv, int is_gui) {
 
     init_verbose();
 
+    LOGV("Program: launcher.exe\n");
+    LOGV("Version: %s\n", APP_VERSION);
+    LOGV("Compiled time: %s %s\n", __DATE__, __TIME__);
+
     /* compute script name from our .exe name*/
     GetModuleFileNameA(NULL, script, sizeof(script));
     /* resolve final path in case script name is symlink */
@@ -364,16 +371,16 @@ int run(int argc, char **argv, int is_gui) {
     module = NULL;
     scriptf = open(script, O_RDONLY);
     if (scriptf == -1) {
-        log_verbose("Cannot open %s\n", script);
+        LOGV("Cannot open %s\n", script);
         module = get_module(exe_dir);
         if (module == NULL) {
-            return fail("Cannot found %s\n", "entrypoint");
+            return fail("Cannot found %s\n", MODFILENAME);
         }
-        log_verbose("Use module '%s'\n", module);
+        LOGV("Use module '%s'\n", module);
         strcpy(python, "#!python.exe -m ");
         strcat(python, module);
     } else {
-        log_verbose("Use script '%s'\n", script);
+        LOGV("Use script '%s'\n", script);
         end = python + read(scriptf, python, sizeof(python));
         close(scriptf);
 
@@ -399,7 +406,7 @@ int run(int argc, char **argv, int is_gui) {
     }
 
     /* printf("Python executable: %s\n", ptr); */
-    log_verbose("Python executable: %s\n", ptr);
+    LOGV("Python executable: %s\n", ptr);
 
     /* Argument array needs to be
        parsedargc + argc, plus 1 for null sentinel */
@@ -428,7 +435,7 @@ int run(int argc, char **argv, int is_gui) {
     if (strncmp(exe_dir, "\\\\?\\", 4) == 0) {
         cwd = exe_dir + 4;
     }
-    log_verbose("Change cwd to '%s'\n", cwd);
+    LOGV("Change cwd to '%s'\n", cwd);
     if (!SetCurrentDirectoryA(cwd)) {
         return fail("Cannot change cwd to '%s'\n", cwd);
     }
@@ -436,7 +443,7 @@ int run(int argc, char **argv, int is_gui) {
     /* printf("args 0: %s\nargs 1: %s\n", newargs[0], newargs[1]); */
 
     if (is_gui) {
-        log_verbose("execv: ");
+        LOGV("Execv: ");
         newargsp = newargs;
         while (*newargsp != NULL) {
             log_verbose("%s ", *newargsp);
@@ -452,7 +459,7 @@ int run(int argc, char **argv, int is_gui) {
      * distribute-issue207: using CreateProcessA instead of spawnv
      */
     cmdline = join_executable_and_args(ptr, newargs, newargc);
-    log_verbose("Create process cmdline: %s\n", cmdline);
+    LOGV("Create process cmdline: %s\n", cmdline);
     return create_and_wait_for_subprocess(cmdline);
 }
 
