@@ -327,8 +327,8 @@ int run(int argc, char **argv, int is_gui) {
 
     char python[512];   /* python executable's filename*/
     char *pyopt;        /* Python option */
-    char script[256];   /* the script's filename */
-    char exe_dir[256];   /* exe's directory */
+    char script[512];   /* the script's filename */
+    char exe_dir[512];   /* exe's directory */
 
     int scriptf;        /* file descriptor for script file */
 
@@ -336,6 +336,7 @@ int run(int argc, char **argv, int is_gui) {
     char *ptr, *end;    /* working pointers for string manipulation */
     char *cmdline;
     char *module;
+    char *cwd;
     int i, parsedargc, newargc;              /* loop counter */
 
     init_verbose();
@@ -419,9 +420,17 @@ int run(int argc, char **argv, int is_gui) {
 
     *newargsp++ = NULL;
 
-    log_verbose("Change cwd to '%s'\n", exe_dir);
-    if (!SetCurrentDirectoryA(exe_dir)) {
-        return fail("Cannot change cwd to '%s'\n", exe_dir);
+    cwd = exe_dir;
+    /*
+     * \\?\ prefix: The path must be canonical and cannot contain relative components like '.' or '..'.
+     *              Avoid path join error in python script (OSError: [WinError 123])
+     */
+    if (strncmp(exe_dir, "\\\\?\\", 4) == 0) {
+        cwd = exe_dir + 4;
+    }
+    log_verbose("Change cwd to '%s'\n", cwd);
+    if (!SetCurrentDirectoryA(cwd)) {
+        return fail("Cannot change cwd to '%s'\n", cwd);
     }
 
     /* printf("args 0: %s\nargs 1: %s\n", newargs[0], newargs[1]); */
