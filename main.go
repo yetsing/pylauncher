@@ -37,7 +37,7 @@ var (
 		"arm64": "gui-arm64.exe",
 	}
 
-	CmdVersion = "0.7.0"
+	CmdVersion = "0.8.0"
 	GitCommit  string
 	BuildTime  string
 
