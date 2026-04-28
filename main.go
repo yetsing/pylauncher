@@ -269,14 +269,13 @@ func makeEntrypoint(exeName string) string {
 		}
 	}
 
-	entrypoints := []string{"main.mod"}
 	entrypointName := "main.py"
 	if gui {
 		entrypointName = "main.pyw"
 	}
-	entrypoints = append(entrypoints, entrypointName)
+	entrypoints := []string{"main.mod", entrypointName}
 	for _, entrypoint := range entrypoints {
-		entrypointPath := filepath.Join(cwd, entrypointName)
+		entrypointPath := filepath.Join(cwd, entrypoint)
 		exists, err := PathExists(entrypointPath)
 		if err != nil {
 			errorLog.Fatal(err)
