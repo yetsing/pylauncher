@@ -72,6 +72,7 @@ func init() {
 }
 
 func main() {
+	var err error
 	if versionFlag {
 		fmt.Printf("Version: %s (%s %s)\n", CmdVersion, GitCommit, BuildTime)
 		return
@@ -86,7 +87,7 @@ func main() {
 		errorLog.Fatalf("platform expected one of [x86, x64, arm64], but got %q", platform)
 	}
 
-	cwd, err := os.Getwd()
+	cwd, err = os.Getwd()
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -137,6 +138,7 @@ func main() {
 }
 
 func installPython(executable string, version string) {
+	venvPath := filepath.Join(cwd, "python3")
 	exists, err := PathExists(executable)
 	if err != nil {
 		errorLog.Fatal(err)
@@ -150,6 +152,7 @@ func installPython(executable string, version string) {
 	}
 	if gotVersion == version {
 		infoLog.Printf("🦘 Skip python because it already exists")
+		gitignore(venvPath)
 		return
 	}
 
@@ -165,13 +168,16 @@ func installPython(executable string, version string) {
 	}
 
 	url := fmt.Sprintf("https://www.nuget.org/api/v2/package/python/%s", version)
-	err = DownloadUnzipAndMove(url, filepath.Join(cwd, "python3"))
+	err = DownloadUnzipAndMove(url, venvPath)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
+
+	gitignore(venvPath)
 }
 
 func makePipWrapper(pythonExecutable string) {
+	pipWrapperPath := filepath.Join(cwd, "pip_wrapper")
 	pipExecutable := filepath.Join(cwd, "pip_wrapper", "bin", "pip.exe")
 	exists, err := PathExists(pipExecutable)
 	if err != nil {
@@ -179,6 +185,7 @@ func makePipWrapper(pythonExecutable string) {
 	}
 	if exists {
 		infoLog.Println("🦘 Skip pip wrapper because it already exists")
+		gitignore(pipWrapperPath)
 		return
 	}
 
@@ -224,6 +231,8 @@ func makePipWrapper(pythonExecutable string) {
 	if !exists {
 		errorLog.Fatal("Failed to make pip.exe")
 	}
+
+	gitignore(pipWrapperPath)
 }
 
 func makeActivateScript() {
@@ -286,4 +295,11 @@ func makeEntrypoint(exeName string) string {
 	_ = file.Close()
 
 	return entrypointName
+}
+
+func gitignore(directory string) {
+	err := stringToFile("# created by pylaun automatically\n*\n", filepath.Join(directory, ".gitignore"))
+	if err != nil {
+		errorLog.Fatal(err)
+	}
 }
