@@ -37,11 +37,11 @@ var (
 		"arm64": "gui-arm64.exe",
 	}
 
-	CmdVersion = "0.10.0"
+	CmdVersion = "0.11.0"
 	GitCommit  string
 	BuildTime  string
 
-	LauncherVersion = "1.2.0"
+	LauncherVersion = "1.2.1"
 )
 
 func init() {
