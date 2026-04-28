@@ -23,6 +23,35 @@ Usage of pylaun.exe:
         show version
 ```
 
+## Example
+
+```text
+> pylaun.exe -version
+Version: 0.11.0 (af88c6e 2026-04-28 16:57:27)
+> pylaun.exe -list-python
+3.5.2
+3.5.2.1
+3.5.2.2
+3.5.3-rc1
+3.5.3
+3.5.4-rc
+...
+> pylaun.exe
+[INFO] 2026/04/29 01:33:03 ⏳ Installing Python 3.12.10
+[INFO] 2026/04/29 01:33:03 📥 Downloading https://www.nuget.org/api/v2/package/python/3.12.10 ...
+[INFO] 2026/04/29 01:33:12 📦 Decompressing...
+[INFO] 2026/04/29 01:33:16 📋 Use copy & delete cause of move cross device
+[INFO] 2026/04/29 01:33:18 🔨 Make pip wrapper
+Looking in links: c:\Users\xxx\AppData\Local\Temp\tmpqfu2r3oa
+Requirement already satisfied: pip in d:\my_code\another\example2\python3\lib\site-packages (25.0.1)
+[INFO] 2026/04/29 01:33:24 🔨 Make activate script
+[INFO] 2026/04/29 01:33:24 🔨 Make entrypoint
+[ERROR] 2026/04/29 01:33:34 ⚠️ Failed to download launcher.exe from github: Get "https://github.com/yetsing/pylauncher/releases/download/LauncherV1.2.1/cli-64.exe": net/http: TLS handshake timeout
+[INFO] 2026/04/29 01:33:34 🔄 Try download launcher.exe from gitee
+[INFO] 2026/04/29 01:33:35 ✅️ Done
+[INFO] 2026/04/29 01:33:35 🎯 entrypoint main.py
+```
+
 运行完成后，当前目录会新增如下文件
 
 ```text
@@ -41,7 +70,23 @@ Usage of pylaun.exe:
 
 - 读取 `main.mod` 记录的模块名，使用 `python -m xxx` 启动
 
-使用 `activate.cmd` / `activate.ps1` 激活虚拟环境。
+使用 `activate.cmd` / `activate.ps1` 激活环境。
+
+注意：目前 `activate.cmd` / `activate.ps1` 只是简单地设置 PATH 环境变量。
+
+```text
+> . .\activate.ps1
+> Get-Command pip
+
+CommandType     Name            Version    Source
+-----------     ----            -------    ------
+Application     pip.exe         0.0.0.0    D:\my_code\another\example2\pip_wrapper\bin\pip.exe
+> Get-Command python
+
+CommandType     Name            Version    Source
+-----------     ----            -------    ------
+Application     python.exe      3.12.10... D:\my_code\another\example2\python3\python.exe
+```
 
 ## 参考
 
