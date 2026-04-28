@@ -27,12 +27,12 @@ Usage of pylaun.exe:
 
 ```text
 .
-├── pip_wrapper
-├── python3
-├── activate.cmd
-├── activate.ps1
-├── launcher.exe
-└── main.py
+├── pip_wrapper     改造过的 pip.exe
+├── python3         Python 解释器和 Python 包
+├── activate.cmd    cmd 激活环境
+├── activate.ps1    powershell 激活环境
+├── launcher.exe    启动 exe
+└── main.py         入口脚本文件
 ```
 
 运行 `launcher.exe` ，启动方式如下（按优先级排序）
