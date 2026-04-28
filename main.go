@@ -130,35 +130,7 @@ func main() {
 	makeActivateScript()
 
 	infoLog.Println("🔨 Make entrypoint")
-	url := fmt.Sprintf("https://github.com/yetsing/pylauncher/releases/download/LauncherV%s/%s", LauncherVersion, exeName)
-	file, err := os.OpenFile("launcher.exe", os.O_WRONLY|os.O_CREATE, 0755)
-	if err != nil {
-		errorLog.Fatal(err)
-	}
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(file)
-	err = downloadFile(url, file)
-	if err != nil {
-		errorLog.Printf("⚠️ Failed to download launcher.exe from github: %v", err)
-		infoLog.Println("🔄 Try download launcher.exe from gitee")
-		url = fmt.Sprintf("https://raw.giteeusercontent.com/ayeqing/yq-file-storage/raw/master/LauncherV%s/%s", LauncherVersion, exeName)
-		err = downloadFile(url, file)
-		if err != nil {
-			errorLog.Fatal(err)
-		}
-	}
-	entrypointName := "main.py"
-	if gui {
-		entrypointName = "main.pyw"
-	}
-	// O_CREATE: 如果文件不存在则创建
-	// O_EXCL: 与 O_CREATE 配合使用，如果文件已存在，则 OpenFile 会返回错误
-	file, err = os.OpenFile(entrypointName, os.O_CREATE|os.O_EXCL|os.O_RDONLY, 0644)
-	if err != nil && !os.IsExist(err) {
-		errorLog.Fatal(err)
-	}
-	_ = file.Close()
+	entrypointName := makeEntrypoint(exeName)
 
 	infoLog.Println("✅️ Done")
 	infoLog.Printf("🎯 entrypoint %s", entrypointName)
@@ -266,4 +238,52 @@ func makeActivateScript() {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
+}
+
+func makeEntrypoint(exeName string) string {
+	url := fmt.Sprintf("https://github.com/yetsing/pylauncher/releases/download/LauncherV%s/%s", LauncherVersion, exeName)
+	file, err := os.OpenFile("launcher.exe", os.O_WRONLY|os.O_CREATE, 0755)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+	err = downloadFile(url, file)
+	if err != nil {
+		errorLog.Printf("⚠️ Failed to download launcher.exe from github: %v", err)
+		infoLog.Println("🔄 Try download launcher.exe from gitee")
+		url = fmt.Sprintf("https://raw.giteeusercontent.com/ayeqing/yq-file-storage/raw/master/LauncherV%s/%s", LauncherVersion, exeName)
+		err = downloadFile(url, file)
+		if err != nil {
+			errorLog.Fatal(err)
+		}
+	}
+
+	entrypoints := []string{"main.mod"}
+	entrypointName := "main.py"
+	if gui {
+		entrypointName = "main.pyw"
+	}
+	entrypoints = append(entrypoints, entrypointName)
+	for _, entrypoint := range entrypoints {
+		entrypointPath := filepath.Join(cwd, entrypointName)
+		exists, err := PathExists(entrypointPath)
+		if err != nil {
+			errorLog.Fatal(err)
+		}
+		if exists {
+			return entrypoint
+		}
+	}
+
+	// O_CREATE: 如果文件不存在则创建
+	// O_EXCL: 与 O_CREATE 配合使用，如果文件已存在，则 OpenFile 会返回错误
+	file, err = os.OpenFile(entrypointName, os.O_CREATE|os.O_EXCL|os.O_RDONLY, 0644)
+	if err != nil && !os.IsExist(err) {
+		errorLog.Fatal(err)
+	}
+	_ = file.Close()
+
+	return entrypointName
 }
