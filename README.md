@@ -37,7 +37,7 @@ Usage of pylaun.exe:
 
 运行 `launcher.exe` ，启动方式如下（按优先级排序）
 
-- 运行 `main.py` / `main.pyw`
+- 运行 `main.py` (non-gui) / `main.pyw` (gui)
 
 - 读取 `main.mod` 记录的模块名，使用 `python -m xxx` 启动
 
