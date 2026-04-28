@@ -29,7 +29,7 @@ jobs:
           python-version: '3.12'
 
       - name: apply patch
-        run: cd setuptools && git apply ../main/setuptools.patch && cd ..
+        run: cd setuptools && cp ../main/_launcher.c . && cd ..
 
       - name: build
         run: cd setuptools && python3 .\tools\build_launchers.py && cd ..
