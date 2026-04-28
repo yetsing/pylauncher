@@ -41,7 +41,7 @@ var (
 	GitCommit  string
 	BuildTime  string
 
-	LauncherVersion = "1.1.1"
+	LauncherVersion = "1.2.0"
 )
 
 func init() {
