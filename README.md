@@ -35,7 +35,11 @@ Usage of pylaun.exe:
 └── main.py
 ```
 
-运行 `launcher.exe` ：他会使用 `python3\python.exe` 运行同目录下的 `main.py` 。
+运行 `launcher.exe` ，启动方式如下（按优先级排序）
+
+- 运行 `main.py` / `main.pyw`
+
+- 读取 `main.mod` 记录的模块名，使用 `python -m xxx` 启动
 
 使用 `activate.cmd` / `activate.ps1` 激活虚拟环境。
 
