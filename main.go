@@ -40,6 +40,8 @@ var (
 	CmdVersion = "0.6.0"
 	GitCommit  string
 	BuildTime  string
+
+	LauncherVersion = "1.1.0"
 )
 
 func init() {
@@ -128,7 +130,7 @@ func main() {
 	makeActivateScript()
 
 	infoLog.Println("🔨 Make entrypoint")
-	url := fmt.Sprintf("https://github.com/yetsing/pylauncher/releases/download/LauncherV1.0.0/%s", exeName)
+	url := fmt.Sprintf("https://github.com/yetsing/pylauncher/releases/download/LauncherV%s/%s", LauncherVersion, exeName)
 	file, err := os.OpenFile("launcher.exe", os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		errorLog.Fatal(err)
@@ -140,7 +142,7 @@ func main() {
 	if err != nil {
 		errorLog.Printf("⚠️ Failed to download launcher.exe from github: %v", err)
 		infoLog.Println("🔄 Try download launcher.exe from gitee")
-		url = fmt.Sprintf("https://raw.giteeusercontent.com/ayeqing/yq-file-storage/raw/master/LauncherV1.0.0/%s", exeName)
+		url = fmt.Sprintf("https://raw.giteeusercontent.com/ayeqing/yq-file-storage/raw/master/LauncherV%s/%s", LauncherVersion, exeName)
 		err = downloadFile(url, file)
 		if err != nil {
 			errorLog.Fatal(err)
