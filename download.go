@@ -14,7 +14,7 @@ import (
 func DownloadUnzipAndMove(url, targetPath string) error {
 	// 1. 创建临时文件来存储下载的 zip
 	// 使用 "" 作为第一个参数会让 Go 自动使用系统的临时目录（如 /tmp 或 %TEMP%）
-	tempFile, err := os.CreateTemp("", "download-*.zip")
+	tempFile, err := os.CreateTemp(".", "download-*.zip")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
@@ -34,7 +34,7 @@ func DownloadUnzipAndMove(url, targetPath string) error {
 
 	// 3. 解压到临时目录
 	// 我们先解压到一个随机的临时目录，确认无误后再移动
-	tempExtractDir, err := os.MkdirTemp("", "extract-")
+	tempExtractDir, err := os.MkdirTemp(".", "extract-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir for decompression: %w", err)
 	}
